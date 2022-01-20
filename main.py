@@ -2,9 +2,12 @@ import numpy as np
 import os
 import asyncio
 from strgen import StringGenerator as SG
+import time
 import aiofiles
 
 STRING = "MARUTI"
+START_TIME = time.time()
+END_TIME = None
 
 '''
 Pseudo Class manipulates random strings 
@@ -50,30 +53,6 @@ class file:
         self.pseu_obj_file1 = Pseudo() #Pseudo object for file 1#
         self.pseu_obj_file2 = Pseudo() #Pseudo object for file 2#
 
-
-    async def write_data(self,file_descriptor,file_name):
-        while True:
-            try:
-                print(f"Writing for {file_name}")
-                file_descriptor.write(self.pseu_obj_file1.obtain_cndntn_string()+"\n")
-                file_descriptor.flush()
-                await asyncio.sleep(0.5)
-
-            except asyncio.CancelledError as error:
-                print("Keyboard interrupt received")
-                print("Closing the connections and files ... ")
-                self.file1_desc.close()
-                self.file2_desc.close()
-                self.logfile_desc.close()
-                break
-
-            except Exception as e:
-                print("Something else exception occured")
-                print(e.__class__.__name__)
-                await asyncio.sleep(1.0)
-                break
-
-
     #Monitor and write MARUTI count in Logger#
     async def logger(self):
 
@@ -100,6 +79,37 @@ class file:
         self.logfile_desc.write("File2 count values are {} \n".format(self.cntr2))
         self.logfile_desc.seek(0)
         self.logfile_desc.flush()
+
+
+    async def write_data(self,file_descriptor,file_name):
+        global START_TIME
+        while True:
+            try:
+                print(f"Writing for {file_name}")
+                file_descriptor.write(self.pseu_obj_file1.obtain_cndntn_string()+"\n")
+                file_descriptor.flush()
+                await asyncio.sleep(0.5)
+
+                END_TIME = time.time()
+                if int(END_TIME - START_TIME) % 5 == 0 and int(END_TIME-START_TIME) != 0:
+                    START_TIME = time.time()
+                    print("[Info:] File Monitoring Active ")
+                    await self.logger()
+
+            except asyncio.CancelledError as error:
+                print("Keyboard interrupt received")
+                print("Closing the connections and files ... ")
+                await self.logger()
+                self.file1_desc.close()
+                self.file2_desc.close()
+                self.logfile_desc.close()
+                break
+
+            except Exception as e:
+                print("Something else exception occured")
+                print(e.__class__.__name__)
+                await asyncio.sleep(1.0)
+                break
 
 
 async def caller():
