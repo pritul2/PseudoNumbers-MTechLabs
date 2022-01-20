@@ -1,9 +1,5 @@
 import numpy as np
 import os
-import time
-import re
-import random
-import string
 import asyncio
 from strgen import StringGenerator as SG
 
@@ -47,7 +43,7 @@ class file:
         self.pseu_obj_file2 = Pseudo()
 
     async def write_data_file1(self):
-        self.file1_desc.write(self.pseu_obj_file1.obtain_cndntn_string())
+        self.file1_desc.write(self.pseu_obj_file1.obtain_cndntn_string()+"\n")
         self.file1_desc.flush()
         print("[INFO:] Writing in File 1 ")
         await asyncio.sleep(1.0)
@@ -55,7 +51,7 @@ class file:
 
 
     async def write_data_file2(self):
-        self.file2_desc.write(self.pseu_obj_file2.obtain_cndntn_string())
+        self.file2_desc.write(self.pseu_obj_file2.obtain_cndntn_string()+"\n")
         self.file2_desc.flush()
         print("[INFO:] Writing in File 2 ")
         await asyncio.sleep(1.0)
@@ -71,18 +67,19 @@ class file:
 
         for lines in self.read_file1.readlines():
             print("[INFO:] Reading File 1 ")
-            if lines == STRING:
+            if lines[:-1] == STRING:
                 self.cntr1+=1
         await asyncio.sleep(1.0)
 
         for lines in self.read_file2.readlines():
             print("[INFO:] Reading File 2 ")
-            if lines == STRING:
+            if lines[:-1] == STRING:
                 self.cntr2+=1
         await asyncio.sleep(1.0)
-
         self.logfile_desc.write("File1 count values are {} \n".format(self.cntr1))
         self.logfile_desc.write("File2 count values are {} \n".format(self.cntr2))
+        self.logfile_desc.seek(0)
+        self.logfile_desc.flush()
 
 
 
@@ -92,13 +89,15 @@ if __name__ == '__main__':
 
     loop = asyncio.get_event_loop()
 
-    task1 = loop.create_task(f.write_data_file1())
-    task2 = loop.create_task(f.write_data_file2())
-    task3 = loop.create_task(f.logger())
+    for i in range(10):
+        task1 = loop.create_task(f.write_data_file1())
+        task2 = loop.create_task(f.write_data_file2())
+        task3 = loop.create_task(f.logger())
 
-    loop.run_until_complete(task1)
-    loop.run_until_complete(task2)
-    loop.run_until_complete(task3)
+
+        loop.run_until_complete(task1)
+        loop.run_until_complete(task2)
+        loop.run_until_complete(task3)
 
     #Handling the pending tasks#
     pending = asyncio.all_tasks(loop=loop)
