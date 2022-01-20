@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import time
 import re
 import random
@@ -6,6 +7,7 @@ import string
 import asyncio
 from strgen import StringGenerator as SG
 
+STRING = "MARUTI"
 
 '''
 Pseudo Class manipulates random strings 
@@ -25,37 +27,46 @@ class Pseudo:
         self.rand_choice = np.random.choice([True,False])
         return self.rand_choice
 
-    #Fix String Generate#
-    def get_Maruti(self):
-        return "MARUTI"
+    def obtain_cndntn_string(self):
+        self.choice = self.binary_clock()
+        # 50-50% Probability Logic #
+        if self.choice:
+            self.pseu_string = STRING
+        else:
+            self.pseu_string = self.generate_rand_string()
 
-async def start_conditional_string():
-    pseu_obj = Pseudo()
+        return self.pseu_string
 
-    while True:
 
-        try:
-            choice = pseu_obj.binary_clock()
+class file:
+    def __init__(self):
+        self.file1_desc = open(os.getcwd()+"/fil1.txt","w")
+        self.file2_desc = open(os.getcwd()+"/fil2.txt","w")
+        self.logfile_desc = open(os.getcwd()+"/counts.log","w")
+        self.pseu_obj_file1 = Pseudo()
+        self.pseu_obj_file2 = Pseudo()
 
-            # 50-50% Probability Logic #
-            if choice:
-                pseu_string = pseu_obj.get_Maruti()
-            else:
-                pseu_string = pseu_obj.generate_rand_string()
+    async def write_data_file1(self):
+        self.file1_desc.write(self.pseu_obj_file1.obtain_cndntn_string())
+        await asyncio.sleep(1.0)
 
-            print(pseu_string)
-            await asyncio.sleep(1.0)
 
-        except KeyboardInterrupt:
-            print('Keyboard interrupt caught')
-            break
-    return
+    async def write_data_file2(self):
+        self.file2_desc.write(self.pseu_obj_file2.obtain_cndntn_string())
+        await asyncio.sleep(1.0)
 
 
 if __name__ == '__main__':
+
+    f = file()
+
     loop = asyncio.get_event_loop()
-    task = loop.create_task(start_conditional_string())
-    loop.run_until_complete(task)
+
+    task1 = loop.create_task(f.write_data_file1())
+    task2 = loop.create_task(f.write_data_file2())
+
+    loop.run_until_complete(task1)
+    loop.run_until_complete(task1)
 
     #Handling the pending tasks#
     pending = asyncio.all_tasks(loop=loop)
