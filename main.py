@@ -9,6 +9,8 @@ STRING = "MARUTI"
 Pseudo Class manipulates random strings 
 '''
 class Pseudo:
+
+    #Constructor#
     def __init__(self):
         pass
 
@@ -23,6 +25,7 @@ class Pseudo:
         self.rand_choice = np.random.choice([True,False])
         return self.rand_choice
 
+    #Gives either random string or MARUTI string#
     def obtain_cndntn_string(self):
         self.choice = self.binary_clock()
         # 50-50% Probability Logic #
@@ -33,15 +36,21 @@ class Pseudo:
 
         return self.pseu_string
 
-
+'''
+File class for file manipulation
+'''
 class file:
-    def __init__(self):
-        self.file1_desc = open(os.getcwd()+"/fil1.txt","w")
-        self.file2_desc = open(os.getcwd()+"/fil2.txt","w")
-        self.logfile_desc = open(os.getcwd()+"/counts.log","w")
-        self.pseu_obj_file1 = Pseudo()
-        self.pseu_obj_file2 = Pseudo()
 
+    #Constructor#
+    def __init__(self):
+        self.file1_desc = open(os.getcwd()+"/fil1.txt","w") #File 1 Descriptor#
+        self.file2_desc = open(os.getcwd()+"/fil2.txt","w") #File 2 Descriptor#
+        self.logfile_desc = open(os.getcwd()+"/counts.log","w") #Log file descriptor#
+        self.pseu_obj_file1 = Pseudo() #Pseudo object for file 1#
+        self.pseu_obj_file2 = Pseudo() #Pseudo object for file 2#
+
+
+    #Write data in file 1#
     async def write_data_file1(self):
         self.file1_desc.write(self.pseu_obj_file1.obtain_cndntn_string()+"\n")
         self.file1_desc.flush()
@@ -49,14 +58,14 @@ class file:
         await asyncio.sleep(1.0)
 
 
-
+    #Write data in file 2#
     async def write_data_file2(self):
         self.file2_desc.write(self.pseu_obj_file2.obtain_cndntn_string()+"\n")
         self.file2_desc.flush()
         print("[INFO:] Writing in File 2 ")
         await asyncio.sleep(1.0)
 
-
+    #Monitor and write MARUTI count in Logger#
     async def logger(self):
 
         print("[INFO:] Inside logger")
@@ -67,14 +76,16 @@ class file:
 
         for lines in self.read_file1.readlines():
             print("[INFO:] Reading File 1 ")
-            if lines[:-1] == STRING:
+            if lines[:-1] == STRING: #-1 because of \n#
                 self.cntr1+=1
         await asyncio.sleep(1.0)
 
         for lines in self.read_file2.readlines():
-            print("[INFO:] Reading File 2 ")
+            print("[INFO:] Reading File 2 ") #-1 because of \n#
             if lines[:-1] == STRING:
                 self.cntr2+=1
+
+
         await asyncio.sleep(1.0)
         self.logfile_desc.write("File1 count values are {} \n".format(self.cntr1))
         self.logfile_desc.write("File2 count values are {} \n".format(self.cntr2))
