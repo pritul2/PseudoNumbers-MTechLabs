@@ -2,6 +2,7 @@ import numpy as np
 import os
 import asyncio
 from strgen import StringGenerator as SG
+import aiofiles
 
 STRING = "MARUTI"
 
@@ -50,20 +51,28 @@ class file:
         self.pseu_obj_file2 = Pseudo() #Pseudo object for file 2#
 
 
-    #Write data in file 1#
-    async def write_data_file1(self):
-        self.file1_desc.write(self.pseu_obj_file1.obtain_cndntn_string()+"\n")
-        self.file1_desc.flush()
-        print("[INFO:] Writing in File 1 ")
-        await asyncio.sleep(1.0)
+    async def write_data(self,file_descriptor,file_name):
+        while True:
+            try:
+                print(f"Writing for {file_name}")
+                file_descriptor.write(self.pseu_obj_file1.obtain_cndntn_string()+"\n")
+                file_descriptor.flush()
+                await asyncio.sleep(0.5)
 
+            except asyncio.CancelledError as error:
+                print("Keyboard interrupt received")
+                print("Closing the connections and files ... ")
+                self.file1_desc.close()
+                self.file2_desc.close()
+                self.logfile_desc.close()
+                break
 
-    #Write data in file 2#
-    async def write_data_file2(self):
-        self.file2_desc.write(self.pseu_obj_file2.obtain_cndntn_string()+"\n")
-        self.file2_desc.flush()
-        print("[INFO:] Writing in File 2 ")
-        await asyncio.sleep(1.0)
+            except Exception as e:
+                print("Something else exception occured")
+                print(e.__class__.__name__)
+                await asyncio.sleep(1.0)
+                break
+
 
     #Monitor and write MARUTI count in Logger#
     async def logger(self):
@@ -93,28 +102,28 @@ class file:
         self.logfile_desc.flush()
 
 
+async def caller():
+    f = file()
+    task1 = loop.create_task(f.write_data(f.file1_desc,"File 1"))
+    task2 = loop.create_task(f.write_data(f.file2_desc,"File 2"))
+    await asyncio.wait([task1,task2])
 
 if __name__ == '__main__':
 
-    f = file()
+    try:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(caller())
 
-    loop = asyncio.get_event_loop()
+    except Exception as e:
+        print("exception occured in asyncio")
+        print(e)
 
-    for i in range(10):
-        task1 = loop.create_task(f.write_data_file1())
-        task2 = loop.create_task(f.write_data_file2())
-        task3 = loop.create_task(f.logger())
+    finally:
+        #Handling the pending tasks#
+        pending = asyncio.all_tasks(loop=loop)
+        for tasks in pending:
+            tasks.cancel()
 
-
-        loop.run_until_complete(task1)
-        loop.run_until_complete(task2)
-        loop.run_until_complete(task3)
-
-    #Handling the pending tasks#
-    pending = asyncio.all_tasks(loop=loop)
-    for tasks in pending:
-        tasks.cancel()
-
-    # Throw exception error in tasks #
-    group = asyncio.gather(*pending, return_exceptions=True)
-    loop.run_until_complete(group)
+        # Throw exception error in tasks #
+        group = asyncio.gather(*pending, return_exceptions=True)
+        loop.run_until_complete(group)
