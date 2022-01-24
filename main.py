@@ -1,5 +1,5 @@
 '''
-Copyright Version: ALPHA
+Copyright Version: BETA
 Developer: Pritul Dave
 Organization: Maruti Tech Labs
 This software is free to reuse
@@ -16,6 +16,7 @@ import aiofiles
 
 STRING = "MARUTI" #Fixed String#
 START_TIME, END_TIME = time.time(), None #Time to activate monitor#
+BREAK_SIGNAL = False
 
 
 '''
@@ -71,6 +72,8 @@ class file:
     '''
     async def logger(self):
 
+        await asyncio.sleep(0.01)
+
         print("[INFO:] Inside logger")
 
         #Open both the files#
@@ -79,15 +82,19 @@ class file:
 
         #Setting file pointer based on tracker#
         if self.fptr_pos1 is not None and self.fptr_pos2 is not None:
+            print("Not none input")
             self.read_file1.seek(self.fptr_pos1)
             self.read_file2.seek(self.fptr_pos2)
+        else:
+            self.read_file1.seek(0)
+            self.read_file2.seek(0)
 
         #Read the file 1#
         for lines in self.read_file1.readlines():
             print("[INFO:] Reading File 1 ")
             if lines[:-1] == STRING: #-1 because of \n#
                 self.cntr1+=1
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(0.01)
 
         #Set the file pointer to track#
         self.fptr_pos1 = self.read_file1.tell()
@@ -97,7 +104,7 @@ class file:
             print("[INFO:] Reading File 2 ") #-1 because of \n#
             if lines[:-1] == STRING:
                 self.cntr2+=1
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(0.01)
 
         #Set the file pointer to track#
         self.fptr_pos2 = self.read_file2.tell()
@@ -105,10 +112,17 @@ class file:
         #Writing ino logger#
         self.logfile_desc.write("File1 count values are {} \n".format(self.cntr1))
         self.logfile_desc.write("File2 count values are {} \n".format(self.cntr2))
+
         self.logfile_desc.seek(0)
         self.logfile_desc.flush()
 
-        await asyncio.sleep(2.0)
+        await asyncio.sleep(0.01)
+
+
+    async def read_data(self):
+        while True:
+            await asyncio.sleep(5)
+            await self.logger()
 
     '''
     File Writing module
@@ -129,22 +143,20 @@ class file:
                 file_descriptor.flush()
                 await asyncio.sleep(0.5)
 
-                #Activate the file monitoring if it is 5 second interval#
-                END_TIME = time.time()
-                if int(END_TIME - START_TIME) % 5 == 0 and int(END_TIME-START_TIME) != 0:
-                    START_TIME = time.time()
-                    print("[Info:] File Monitoring Active ")
-                    await self.logger()
-
             #Handle the keyboard interrupt#
             except asyncio.CancelledError as error:
+                global BREAK_SIGNAL
+                if BREAK_SIGNAL:
+                    return
+                BREAK_SIGNAL=True
                 print("Keyboard interrupt received")
                 print("Closing the connections and files ... ")
+                await asyncio.sleep(2) #To finish all threading operations#
                 await self.logger()
                 self.file1_desc.close()
                 self.file2_desc.close()
                 self.logfile_desc.close()
-                break
+                return
 
             #Handle if anyother exception#
             except Exception as e:
@@ -164,7 +176,8 @@ async def caller():
     #Creating asynchronous tasks#
     task1 = loop.create_task(f.write_data(f.file1_desc,"File 1"))
     task2 = loop.create_task(f.write_data(f.file2_desc,"File 2"))
-    await asyncio.wait([task1,task2])
+    task3  = loop.create_task(f.read_data())
+    await asyncio.wait([task1,task2,task3])
 
 
 if __name__ == '__main__':
