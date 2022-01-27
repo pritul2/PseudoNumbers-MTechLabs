@@ -5,4 +5,3 @@ Generate a random writer that writes pseudo strings (with at least 50% probabili
 It should have capability to monitor both the files and count the total number for occurrences for  “MARUTI” keyword by each file and write output to "counts.log" file.
 
 
-⚠ ..... Under Construction ..... ⚠
